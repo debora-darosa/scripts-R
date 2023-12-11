@@ -2,7 +2,7 @@
 
 Repositório desenvolvido para armazenar os principais scripts que criei para analisar dados usando a linguagem R.
 
-## Aqui você encontrará:
+## Aqui você encontrará
 
 * 1- Estrutura principal;
 * 2- Funções;
