@@ -125,7 +125,4 @@ p3 <- viagens %>%
 head(p3)
 
 #Criando o gráfico
-ggplot(p3, aes(x = data.inicio.formatada, y = qtd, group = 1)) +
-  geom_line() +
-  geom_point() +
-  labs(x = "Data", y = "Qtd")
+

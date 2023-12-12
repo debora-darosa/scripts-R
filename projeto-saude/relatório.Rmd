@@ -1,0 +1,146 @@
+---
+title: "Relatório"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-12-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Obtenção dos dados
+
+
+Nesta seção, o script começa lendo um conjunto de dados sobre diabetes a partir de um arquivo CSV. O caminho do arquivo é especificado na função read.csv. O cabeçalho (primeiras linhas) do conjunto de dados é impresso usando a função head.
+
+
+```{r}
+diabetes <- read.csv(file = "/projeto-saude/dados/diabetes.csv")
+
+head(diabetes[1:6])
+```
+
+
+
+# Preparação dos dados
+
+
+Aqui, o script está realizando algumas manipulações nos dados. Especificamente, está convertendo a variável "Outcome" para um fator e filtrando as observações em que o valor da variável "Insulin" é menor ou igual a 250
+
+
+```{r message=FALSE, warning=FALSE}
+diabetes$Outcome <- as.factor(diabetes$Outcome)
+
+library(dplyr)
+
+diabetes2 <- diabetes %>%
+  filter(Insulin <= 250)
+
+boxplot(diabetes2$Insulin)
+```
+
+# Construção do Modelo 
+
+
+## Divisão dos dados
+
+A biblioteca caTools está sendo usada para dividir os dados em conjuntos de treinamento e teste. Isso é feito usando a função sample.split. Cerca de 70% dos dados são usados para treinamento e 30% para teste.
+
+
+```{r message=FALSE, warning=FALSE, paged.print=TRUE}
+library(caTools)
+
+set.seed(123)
+index = sample.split(diabetes2$Pregnancies, SplitRatio = .70)
+
+train = subset(diabetes2, index == TRUE)
+test  = subset(diabetes2, index == FALSE)
+```
+
+# Construção do modelo
+
+
+## Treinamento
+
+
+Aqui, o script está utilizando a biblioteca caret para treinar um modelo de k-vizinhos mais próximos (k-NN) para prever a variável de resposta "Outcome". O script está testando diferentes valores de k (de 1 a 20) e avaliando o desempenho do modelo usando validação cruzada. O gráfico gerado pela função plot ajuda a visualizar como o desempenho do modelo varia com diferentes valores de k.
+
+
+```{r message=FALSE, warning=FALSE}
+library(caret)
+library(e1071)
+set.seed(321)
+
+modelo2 <- train(
+  Outcome ~., data = train, method = "knn",
+   tuneGrid = expand.grid(k = c(1:20)))
+
+modelo2$results
+
+modelo2$bestTune
+
+plot(modelo2)
+```
+
+
+# Avaliando o modelo
+
+
+Finalmente, o script usa o modelo treinado para fazer previsões no conjunto de teste. O resultado é avaliado usando a matriz de confusão, que é uma tabela que compara as previsões do modelo com os valores reais da variável "Outcome" no conjunto de teste.
+
+```{r message=FALSE, warning=FALSE}
+predicoes <- predict(modelo2,test)
+
+predicoes
+
+confusionMatrix(predicoes, test$Outcome)
+```
+# Conclusão
+
+As previsões do modelo foram armazenadas na variável predicoes. Agora, vamos interpretar a matriz de confusão e as métricas de avaliação do modelo:
+
+Matriz de Confusão:
+Verdadeiros Positivos (TP): 127
+Falsos Positivos (FP): 14
+Verdadeiros Negativos (TN): 38
+Falsos Negativos (FN): 35
+A matriz de confusão mostra como o modelo classificou as instâncias em relação ao resultado real.
+
+## Métricas de Avaliação:
+
+### Acurácia (Accuracy): 77.1%
+A acurácia indica a proporção de previsões corretas em relação ao total de previsões. Neste caso, 77.1% das previsões foram corretas.
+
+### Sensibilidade (Recall ou True Positive Rate): 90.07%
+A sensibilidade mostra a proporção de casos positivos reais que foram corretamente identificados pelo modelo. Neste caso, o modelo captura 90.07% dos casos de "Outcome" positivo.
+
+### Especificidade (True Negative Rate): 52.05%
+A especificidade indica a proporção de casos negativos reais que foram corretamente identificados pelo modelo. Neste caso, o modelo captura 52.05% dos casos de "Outcome" negativo.
+
+### Valor Preditivo Positivo (Pos Pred Value ou Precisão): 78.40%
+O valor preditivo positivo representa a proporção de previsões positivas corretas em relação ao total de previsões positivas. Neste caso, 78.40% das previsões positivas são corretas.
+
+### Valor Preditivo Negativo (Neg Pred Value): 73.08%
+O valor preditivo negativo representa a proporção de previsões negativas corretas em relação ao total de previsões negativas. Neste caso, 73.08% das previsões negativas são corretas.
+
+### Kappa: 45.27%
+O coeficiente Kappa é uma medida de concordância entre as previsões do modelo e as observações reais. Quanto mais próximo de 100%, melhor.
+
+
+## Interpretação:
+
+
+- O modelo tem uma acurácia geral de 77.1%, o que é relativamente bom.
+- A sensibilidade é alta (90.07%), indicando que o modelo é eficaz na identificação de casos positivos de "Outcome".
+- A especificidade é mais baixa (52.05%), indicando que o modelo tem mais dificuldade em identificar corretamente casos negativos de "Outcome".
+- O valor preditivo positivo (precisão) é razoável a 78.40%.
+- O valor preditivo negativo é de 73.08%, o que é aceitável.
+
+
+## Conclusão:
+
+O modelo parece ser eficaz na identificação de casos positivos de "Outcome", mas pode ser aprimorado para melhorar a especificidade.
+As métricas fornecem uma visão geral do desempenho do modelo, permitindo ajustes se necessário. Mas é preciso salientar que a interpretação das métricas pode depender do contexto específico do problema e das consequências associadas a falsos positivos e falsos negativos.
